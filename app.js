@@ -1,9 +1,9 @@
 // File JavaScript untuk aplikasi Pabrik Nama Kreatif
 
 // PENTING: Ganti dengan API Key Anda yang sebenarnya
-const API_KEY = 'MASUKKAN_API_KEY_ANDA_DI_SINI';
+const API_KEY = 'AIzaSyDet_RXvk9Xb1W67qxe0aoIr_iCst2qOt0';
 // PENTING: Sesuaikan dengan URL endpoint Gemini yang benar untuk model gemini-flash atau yang Anda gunakan
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash:generateContent?key=${API_KEY}`;
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM telah sepenuhnya dimuat dan di-parse');
