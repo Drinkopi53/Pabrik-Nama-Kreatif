@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pabrik Nama Kreatif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                'ivory': '#FFFFF0', // Contoh jika ingin custom color
+              }
+            }
+          }
+        }
+    </script>
+    <style>
+        /* Bisa ditambahkan custom CSS kecil di sini jika benar-benar diperlukan,
+           namun usahakan maksimalkan penggunaan Tailwind */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto; /* Pusatkan loader */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-gray-300 flex items-center justify-center min-h-screen p-4 font-sans">
+    <div class="w-full max-w-2xl">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl sm:text-5xl font-bold text-white">Pabrik Nama Kreatif</h1>
+        </header>
+
+        <main class="bg-slate-800 p-6 sm:p-8 rounded-lg shadow-2xl">
+            <p class="mb-8 text-md sm:text-lg text-slate-400 text-center">
+                Selamat datang! Pilih kategori dan masukkan kata kunci untuk mendapatkan ide nama yang unik dan menarik dari AI.
+            </p>
+
+            <form id="name-generator-form" class="space-y-6">
+                <div>
+                    <label for="category-select" class="block mb-2 text-sm font-medium text-slate-300">Kategori:</label>
+                    <select id="category-select" name="kategori" class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 transition-colors duration-150">
+                        <option value="startup-teknologi">Startup Teknologi</option>
+                        <option value="nama-produk">Nama Produk</option>
+                        <option value="karakter-game">Karakter Game</option>
+                        <option value="nama-kucing">Nama Kucing</option>
+                        <option value="band-musik">Band Musik</option>
+                        <option value="nama-channel">Nama Channel YouTube</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="keyword-input" class="block mb-2 text-sm font-medium text-slate-300">Kata Kunci (opsional tapi disarankan):</label>
+                    <input type="text" id="keyword-input" name="katakunci" placeholder="Contoh: Cepat, Inovasi, Ajaib, Lucu" class="bg-slate-700 border border-slate-600 text-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 transition-colors duration-150">
+                </div>
+
+                <button type="button" id="generate-btn" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-bold rounded-lg text-lg px-5 py-3.5 text-center transition-all duration-150 ease-in-out transform hover:scale-105 active:scale-95">
+                    Hasilkan Nama!
+                </button>
+            </form>
+
+            <div id="results-container" class="mt-10 p-4 sm:p-6 bg-slate-700/50 rounded-lg min-h-[150px] text-slate-300 transition-all duration-300">
+                <p class="text-center text-slate-400">Hasil nama akan muncul di sini...</p>
+            </div>
+        </main>
+
+        <footer class="mt-10 text-center text-xs sm:text-sm text-slate-500">
+            <p>&copy; <span id="current-year"></span> Pabrik Nama Kreatif. Ditenagai oleh AI.</p>
+        </footer>
+    </div>
+
+    <script>
+        // PENTING: Ganti dengan API Key Anda yang sebenarnya
+        const API_KEY = 'MASUKKAN_API_KEY_ANDA_DI_SINI';
+        // PENTING: Sesuaikan dengan URL endpoint Gemini yang benar untuk model gemini-flash atau yang Anda gunakan
+        // Contoh URL untuk gemini-1.5-flash (pastikan model tersedia dan sesuai):
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Pabrik Nama Kreatif Siap!');
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+
+            const categorySelect = document.getElementById('category-select');
+            const keywordInput = document.getElementById('keyword-input');
+            const generateBtn = document.getElementById('generate-btn');
+            const resultsContainer = document.getElementById('results-container');
+
+            if (!categorySelect || !keywordInput || !generateBtn || !resultsContainer) {
+                console.error('Satu atau lebih elemen HTML tidak ditemukan. Pastikan ID elemen sudah benar.');
+                if(resultsContainer) {
+                    resultsContainer.innerHTML = '<p class="text-red-500 text-center">Error: Elemen halaman penting tidak dapat dimuat. Coba refresh halaman.</p>';
+                }
+                return;
+            }
+
+            function displayNames(apiResponseText) {
+                resultsContainer.innerHTML = ''; // Hapus pesan "Sedang memproses..." atau hasil sebelumnya
+
+                const ul = document.createElement('ul');
+                ul.className = 'space-y-3'; // Styling Tailwind untuk jarak antar item daftar
+
+                const namesArray = apiResponseText.split('\n').map(name => name.trim()).filter(name => name !== '');
+
+                if (namesArray.length === 0) {
+                    resultsContainer.innerHTML = '<p class="text-center text-slate-400">Tidak ada nama yang berhasil dihasilkan atau format respons tidak dikenali. Coba lagi dengan kata kunci lain atau periksa konsol.</p>';
+                    console.warn("Array nama kosong setelah parsing:", apiResponseText);
+                    return;
+                }
+
+                namesArray.forEach(nameString => {
+                    const li = document.createElement('li');
+                    li.textContent = nameString.replace(/^\s*(\d+\.|\*|-)\s*/, '').trim(); // Membersihkan nomor, bintang, atau tanda hubung di awal
+                    li.className = 'p-3 bg-slate-600 hover:bg-slate-500/80 rounded-md shadow text-slate-200 transition-colors duration-150 cursor-pointer';
+                    // Optional: Tambahkan fungsionalitas copy ke clipboard saat diklik
+                    li.onclick = () => {
+                        navigator.clipboard.writeText(li.textContent)
+                            .then(() => {
+                                const originalText = li.textContent;
+                                li.textContent = 'Disalin!';
+                                setTimeout(() => { li.textContent = originalText; }, 1000);
+                            })
+                            .catch(err => console.error('Gagal menyalin nama: ', err));
+                    };
+                    ul.appendChild(li);
+                });
+                resultsContainer.appendChild(ul);
+            }
+
+            async function getGeminiSuggestions(prompt) {
+                resultsContainer.innerHTML = '<div class="loader"></div><p class="text-center text-slate-400 mt-2">Sedang memproses permintaan Anda...</p>';
+                generateBtn.disabled = true;
+                generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                // --- BLOK SIMULASI (HAPUS/KOMENTARI SAAT MENGGUNAKAN API KEY ASLI) ---
+                if (API_KEY === 'MASUKKAN_API_KEY_ANDA_DI_SINI') {
+                    console.warn("API_KEY belum diatur. Menggunakan data simulasi...");
+                    setTimeout(() => {
+                        const kataKunciSim = keywordInput.value.trim() || "Kreatif";
+                        const kategoriTeksSim = categorySelect.options[categorySelect.selectedIndex].text;
+                        const simulatedResponse = `
+1. ${kataKunciSim} Inovasi
+2. Solusi ${kataKunciSim} Cerdas
+3. ${kategoriTeksSim} ${kataKunciSim} Pro
+4. Gema ${kataKunciSim}
+5. ${kataKunciSim} Dinamis
+6. Visi ${kataKunciSim} Digital
+7. ${kataKunciSim} Sentral Unik
+8. Kreasi ${kataKunciSim} Terbaik
+9. ${kataKunciSim} Puncak Ide
+10. Era ${kataKunciSim} Baru Jaya
+                        `.trim();
+                        displayNames(simulatedResponse);
+                        generateBtn.disabled = false;
+                        generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }, 2000);
+                    return;
+                }
+                // --- AKHIR BLOK SIMULASI ---
+
+                try {
+                    const response = await fetch(GEMINI_API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{ text: prompt }]
+                            }],
+                            // Optional: Tambahkan generationConfig jika perlu
+                            // generationConfig: {
+                            //     temperature: 0.7,
+                            //     topK: 40,
+                            //     topP: 0.95,
+                            //     maxOutputTokens: 1024,
+                            // }
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ error: { message: "Gagal mem-parse JSON error dari API."}}));
+                        console.error('Error dari API Gemini:', response.status, errorData);
+                        throw new Error(`Gagal mendapatkan respons dari API: ${response.status} ${response.statusText}. ${errorData?.error?.message || 'Tidak ada detail tambahan.'}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.candidates && data.candidates.length > 0 &&
+                        data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts.length > 0) {
+                        const generatedText = data.candidates[0].content.parts[0].text;
+                        displayNames(generatedText);
+                    } else {
+                        console.error('Format respons API tidak sesuai atau tidak ada kandidat:', data);
+                        resultsContainer.innerHTML = '<p class="text-center text-orange-400">Format respons dari API tidak seperti yang diharapkan atau tidak ada nama yang dihasilkan. Silakan periksa konsol.</p>';
+                    }
+
+                } catch (error) {
+                    console.error('Error saat memanggil Gemini API:', error);
+                    resultsContainer.innerHTML = `<p class="text-center text-red-500">Terjadi kesalahan: ${error.message}</p>`;
+                } finally {
+                    generateBtn.disabled = false;
+                    generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+
+            generateBtn.addEventListener('click', () => {
+                const kataKunci = keywordInput.value.trim();
+                // Kata kunci tidak wajib, tapi jika ada, akan digunakan.
+                // Validasi bisa lebih ketat jika diinginkan.
+
+                if (API_KEY === 'MASUKKAN_API_KEY_ANDA_DI_SINI' &&
+                    !document.querySelector('.loader')) { // Hanya tampilkan confirm jika tidak sedang loading simulasi
+                    const useSimulation = confirm("API Key belum diatur di dalam kode. Apakah Anda ingin melanjutkan dengan data simulasi untuk melihat cara kerja aplikasi?");
+                    if (!useSimulation) {
+                         resultsContainer.innerHTML = '<p class="text-center text-orange-400">Operasi dibatalkan. Silakan atur API Key di dalam kode sumber (file HTML) untuk menggunakan fungsionalitas penuh.</p>';
+                        return;
+                    }
+                }
+
+                const kategoriTeks = categorySelect.options[categorySelect.selectedIndex].text;
+                let promptUntukGemini = `Berikan 10 pilihan nama yang modern, unik, dan mudah diingat untuk kategori '${kategoriTeks}'`;
+                if (kataKunci) {
+                    promptUntukGemini += ` yang berhubungan dengan kata kunci '${kataKunci}'`;
+                }
+                promptUntukGemini += `. Hasilnya hanya berupa daftar nama saja, setiap nama di baris baru, tanpa nomor, tanpa tanda hubung, dan tanpa penjelasan atau komentar tambahan.`;
+
+                console.log('Prompt yang dikirim ke Gemini:', promptUntukGemini);
+                getGeminiSuggestions(promptUntukGemini);
+            });
+        });
+    </script>
+</body>
+</html>
