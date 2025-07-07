@@ -1,5 +1,7 @@
 # Pabrik Nama Kreatif
 
+![image](https://github.com/user-attachments/assets/eabe1f65-10d5-4295-a739-10c29763a159)
+
 Pabrik Nama Kreatif adalah aplikasi web sederhana yang membantu pengguna menghasilkan ide-ide nama yang unik dan kreatif menggunakan kekuatan model AI generatif dari Google, Gemini. Pengguna dapat memilih kategori dan memasukkan kata kunci (opsional) untuk mendapatkan daftar saran nama.
 
 Aplikasi ini dibangun sebagai satu file HTML tunggal yang mencakup semua markup, styling (menggunakan Tailwind CSS via CDN), dan logika JavaScript.
